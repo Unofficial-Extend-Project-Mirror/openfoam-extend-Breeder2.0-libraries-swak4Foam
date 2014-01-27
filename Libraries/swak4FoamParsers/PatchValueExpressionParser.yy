@@ -348,6 +348,7 @@ namespace Foam {
 %token TOKEN_eigenVectors
 
 %token TOKEN_cpu
+%token TOKEN_weight
 
 %left '?' ':'
 %left TOKEN_OR
@@ -1241,7 +1242,13 @@ exp:    TOKEN_NUM                  { $$ = driver.makeField($1).ptr(); }
             delete $1; delete $3; delete $5;
           }
         | TOKEN_pi {
-	  $$ = driver.makeField(Foam::constant::mathematical::pi).ptr();
+	  $$ = driver.makeField(
+#ifdef FOAM_NO_SEPARATE_CONSTANT_NAMESPACE
+              Foam::mathematicalConstant::pi
+#else
+              Foam::constant::mathematical::pi
+#endif
+          ).ptr();
           }
         | TOKEN_id '(' ')'                         {
             $$ = driver.makeFaceIdField().ptr();
@@ -1253,6 +1260,9 @@ exp:    TOKEN_NUM                  { $$ = driver.makeField($1).ptr(); }
             $$ = driver.makeField(
                 Foam::scalar(Foam::Pstream::myProcNo())
             ).ptr();
+          }
+        | TOKEN_weight'(' ')'                          {
+            $$ = driver.weights(driver.size()).ptr();
           }
         | TOKEN_rand '(' ')'        {
             $$ = driver.makeRandomField().ptr();
@@ -1916,10 +1926,11 @@ lexp: TOKEN_TRUE   { $$ = driver.makeField(true).ptr(); }
             $$ = driver.doLogicalNot(*$2).ptr();
             delete $2;
           }
-        | evaluateLogicalFunction restOfFunction
-//    | TOKEN_LID		{
-//            $$=driver.getField<Foam::bool>(*$1);delete $1;
-//    }
+    | evaluateLogicalFunction restOfFunction
+    | TOKEN_LID		{
+        $$=driver.getVariable<bool>(*$1,driver.size()).ptr();
+        delete $1;
+      }
 ;
 
 evaluateLogicalFunction: TOKEN_FUNCTION_LID '(' eatCharactersSwitch
@@ -2968,9 +2979,10 @@ plexp: pexp '<' pexp  {
             delete $2;
           }
     | evaluatePointLogicalFunction restOfFunction
-//    | TOKEN_PLID		{
-//            $$=driver.getField<Foam::bool>(*$1);delete $1;
-//    }
+    | TOKEN_PLID		{
+        $$=driver.getVariable<bool>(*$1,driver.pointSize()).ptr();
+        delete $1;
+ }
 ;
 
 evaluatePointLogicalFunction: TOKEN_FUNCTION_PLID '(' eatCharactersSwitch

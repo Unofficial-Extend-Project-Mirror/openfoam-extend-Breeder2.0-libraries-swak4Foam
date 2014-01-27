@@ -95,6 +95,9 @@ public:
 
     TypeName("FieldValueExpressionDriver");
 
+    //- entity this driver operates on
+    typedef fvMesh EntityType;
+
     static const word &driverName() { return driverName_; }
 
     //- old style constructor
@@ -197,15 +200,6 @@ public:
     // Handling the scanner.
     void scan_begin ();
     void scan_end ();
-
-    bool isCellSet(const word &name);
-    bool isCellZone(const word &name);
-
-    bool isFaceSet(const word &name);
-    bool isFaceZone(const word &name);
-
-    bool isPointSet(const word &name);
-    bool isPointZone(const word &name);
 
     // returning fields
     template<class T>

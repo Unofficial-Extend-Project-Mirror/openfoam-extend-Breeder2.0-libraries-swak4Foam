@@ -29,7 +29,8 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -217,6 +218,11 @@ void Foam::manipulatePatchField::manipulatePoint(
                 << " not rewritten. Set 'writeManipulated'" << endl;
         }
     }
+}
+
+void Foam::manipulatePatchField::timeSet()
+{
+    // Do nothing
 }
 
 void Foam::manipulatePatchField::read(const dictionary& dict)

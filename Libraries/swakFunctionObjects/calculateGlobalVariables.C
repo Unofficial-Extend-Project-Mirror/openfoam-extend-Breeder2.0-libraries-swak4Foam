@@ -29,7 +29,8 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2011-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -58,10 +59,18 @@ Foam::calculateGlobalVariables::calculateGlobalVariables
         )
     ),
     toGlobalNamespace_(dict.lookup("toGlobalNamespace")),
-    toGlobalVariables_(dict.lookup("toGlobalVariables"))
+    toGlobalVariables_(dict.lookup("toGlobalVariables")),
+    noReset_(dict.lookupOrDefault<bool>("noReset",false))
 {
     if(debug) {
         Info << "calculateGlobalVariables " << name << " created" << endl;
+    }
+
+    if(!dict.found("noReset")) {
+        WarningIn("calculateGlobalVariables::calculateGlobalVariables")
+            << "No entry 'noReset' in " << dict.name()
+                << ". Assumig 'false'"<< endl;
+
     }
 
     driver_->createWriterAndRead(name+"_"+type());
@@ -83,7 +92,7 @@ void Foam::calculateGlobalVariables::executeAndWriteToGlobal()
             Info << "Getting variable " << name << endl;
         }
 
-        GlobalVariablesRepository::getGlobalVariables(
+        ExpressionResult &res=GlobalVariablesRepository::getGlobalVariables(
             obr_
         ).addValue(
             name,
@@ -93,6 +102,10 @@ void Foam::calculateGlobalVariables::executeAndWriteToGlobal()
             ).variable(name)
         );
 
+        if(noReset_) {
+            res.noReset();
+        }
+
         if(debug) {
             Pout << "Has value "
                 << const_cast<const CommonValueExpressionDriver&>(
@@ -100,6 +113,11 @@ void Foam::calculateGlobalVariables::executeAndWriteToGlobal()
                 ).variable(name) << endl;
         }
     }
+}
+
+void Foam::calculateGlobalVariables::timeSet()
+{
+    // Do nothing
 }
 
 void Foam::calculateGlobalVariables::read(const dictionary& dict)

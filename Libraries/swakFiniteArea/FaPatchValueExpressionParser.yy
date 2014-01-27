@@ -333,8 +333,14 @@ namespace Foam {
 %token TOKEN_det
 %token TOKEN_cof
 %token TOKEN_inv
+%token TOKEN_sph
+%token TOKEN_twoSymm
+%token TOKEN_dev2
+%token TOKEN_eigenValues
+%token TOKEN_eigenVectors
 
 %token TOKEN_cpu
+%token TOKEN_weight
 
 %left '?' ':'
 %left TOKEN_OR
@@ -636,6 +642,38 @@ vexp:   vector                  { $$ = $1; }
             delete $2;
           }
         | '(' vexp ')'		        { $$ = $2; }
+        | TOKEN_eigenValues '(' texp ')'       {
+            $$ = new Foam::vectorField(Foam::eigenValues(*$3));
+            delete $3;
+          }
+        | TOKEN_eigenValues '(' yexp ')'       {
+            $$ = new Foam::vectorField(Foam::eigenValues(*$3));
+            delete $3;
+          }
+        | texp '.' tensorComponentSwitch  TOKEN_x     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::XX)(),
+                $1->component(Foam::tensor::XY)(),
+                $1->component(Foam::tensor::XZ)()
+            ).ptr();
+            delete $1;
+          }
+        | texp '.' tensorComponentSwitch  TOKEN_y     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::YX)(),
+                $1->component(Foam::tensor::YY)(),
+                $1->component(Foam::tensor::YZ)()
+            ).ptr();
+            delete $1;
+          }
+        | texp '.' tensorComponentSwitch  TOKEN_z     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::ZX)(),
+                $1->component(Foam::tensor::ZY)(),
+                $1->component(Foam::tensor::ZZ)()
+            ).ptr();
+            delete $1;
+          }
         | TOKEN_diag '(' texp ')'       {
             //            $$ = new Foam::vectorField( Foam::diag(*$3) ); // not implemented?
             $$ = driver.composeVectorField(
@@ -1167,7 +1205,13 @@ exp:    TOKEN_NUM                  { $$ = driver.makeField($1).ptr(); }
             delete $1; delete $3; delete $5;
           }
         | TOKEN_pi {
-            $$ = driver.makeField(Foam::mathematicalConstant::pi).ptr();
+            $$ = driver.makeField(
+#ifdef FOAM_NO_SEPARATE_CONSTANT_NAMESPACE
+                Foam::mathematicalConstant::pi
+#else
+                Foam::constant::mathematical::pi
+#endif
+            ).ptr();
           }
         | TOKEN_id '(' ')'                         {
             $$ = driver.makeEdgeIdField().ptr();
@@ -1176,6 +1220,9 @@ exp:    TOKEN_NUM                  { $$ = driver.makeField($1).ptr(); }
             $$ = driver.makeField(
                 Foam::scalar(Foam::Pstream::myProcNo())
             ).ptr();
+          }
+        | TOKEN_weight'(' ')'                          {
+            $$ = driver.weights(driver.size()).ptr();
           }
         | TOKEN_rand '(' ')'        {
             $$ = driver.makeRandomField().ptr();
@@ -1375,6 +1422,14 @@ texp:   tensor                  { $$ = $1; }
             $$ = new Foam::tensorField( Foam::skew(*$3) );
             delete $3;
           }
+        | TOKEN_eigenVectors '(' texp ')'       {
+            $$ = new Foam::tensorField(Foam::eigenVectors(*$3));
+            delete $3;
+          }
+        | TOKEN_eigenVectors '(' yexp ')'       {
+            $$ = new Foam::tensorField(Foam::eigenVectors(*$3));
+            delete $3;
+          }
         | TOKEN_inv '(' texp ')'       {
             $$ = new Foam::tensorField( Foam::inv(*$3) );
             delete $3;
@@ -1385,6 +1440,10 @@ texp:   tensor                  { $$ = $1; }
           }
         | TOKEN_dev '(' texp ')'       {
             $$ = new Foam::tensorField( Foam::dev(*$3) );
+            delete $3;
+          }
+        | TOKEN_dev2 '(' texp ')'       {
+            $$ = new Foam::tensorField( Foam::dev2(*$3) );
             delete $3;
           }
         | texp '.' tensorComponentSwitch TOKEN_transpose '(' ')'  {
@@ -1525,6 +1584,14 @@ yexp:   symmTensor                  { $$ = $1; }
             $$ = new Foam::symmTensorField( Foam::symm(*$3) );
             delete $3;
           }
+        | TOKEN_twoSymm '(' yexp ')'       {
+            $$ = new Foam::symmTensorField( Foam::twoSymm(*$3) );
+            delete $3;
+          }
+        | TOKEN_twoSymm '(' texp ')'       {
+            $$ = new Foam::symmTensorField( Foam::twoSymm(*$3) );
+            delete $3;
+          }
         | TOKEN_inv '(' yexp ')'       {
             $$ = new Foam::symmTensorField( Foam::inv(*$3) );
             delete $3;
@@ -1535,6 +1602,10 @@ yexp:   symmTensor                  { $$ = $1; }
           }
         | TOKEN_dev '(' yexp ')'       {
             $$ = new Foam::symmTensorField( Foam::dev(*$3) );
+            delete $3;
+          }
+        | TOKEN_dev2 '(' yexp ')'       {
+            $$ = new Foam::symmTensorField( Foam::dev2(*$3) );
             delete $3;
           }
         | TOKEN_sqr '(' vexp ')'       {
@@ -1637,6 +1708,18 @@ hexp:   sphericalTensor                  { $$ = $1; }
             delete $2;
           }
         | '(' hexp ')'		        { $$ = $2; }
+        | TOKEN_sph '(' texp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
+        | TOKEN_sph '(' yexp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
+        | TOKEN_sph '(' hexp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
         | TOKEN_inv '(' hexp ')'       {
             $$ = new Foam::sphericalTensorField( Foam::inv(*$3) );
             delete $3;
@@ -1764,9 +1847,10 @@ lexp: TOKEN_TRUE   { $$ = driver.makeField(true).ptr(); }
             delete $2;
           }
         | evaluateLogicalFunction restOfFunction
-//    | TOKEN_LID		{
-//            $$=driver.getField<Foam::bool>(*$1);delete $1;
-//    }
+    | TOKEN_LID		{
+            $$=driver.getVariable<bool>(*$1,driver.size()).ptr();
+            delete $1;
+    }
 ;
 
 evaluateLogicalFunction: TOKEN_FUNCTION_LID '(' eatCharactersSwitch
@@ -1877,6 +1961,38 @@ pvexp:  pvexp '+' pvexp 		{
         | '*' pyexp %prec TOKEN_HODGE          {
             $$ = new Foam::vectorField(*(*$2));
             delete $2;
+          }
+        | TOKEN_eigenValues '(' ptexp ')'       {
+            $$ = new Foam::vectorField(Foam::eigenValues(*$3));
+            delete $3;
+          }
+        | TOKEN_eigenValues '(' pyexp ')'       {
+            $$ = new Foam::vectorField(Foam::eigenValues(*$3));
+            delete $3;
+          }
+        | ptexp '.' tensorComponentSwitch  TOKEN_x     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::XX)(),
+                $1->component(Foam::tensor::XY)(),
+                $1->component(Foam::tensor::XZ)()
+            ).ptr();
+            delete $1;
+          }
+        | ptexp '.' tensorComponentSwitch  TOKEN_y     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::YX)(),
+                $1->component(Foam::tensor::YY)(),
+                $1->component(Foam::tensor::YZ)()
+            ).ptr();
+            delete $1;
+          }
+        | ptexp '.' tensorComponentSwitch  TOKEN_z     {
+            $$ = driver.composeVectorField(
+                $1->component(Foam::tensor::ZX)(),
+                $1->component(Foam::tensor::ZY)(),
+                $1->component(Foam::tensor::ZZ)()
+            ).ptr();
+            delete $1;
           }
         | TOKEN_diag '(' ptexp ')'       {
             //            $$ = new Foam::vectorField( Foam::diag(*$3) ); // not implemented?
@@ -2308,6 +2424,14 @@ ptexp:  ptexp '+' ptexp 		{
             $$ = new Foam::tensorField( Foam::skew(*$3) );
             delete $3;
           }
+        | TOKEN_eigenVectors '(' ptexp ')'       {
+            $$ = new Foam::tensorField(Foam::eigenVectors(*$3));
+            delete $3;
+          }
+        | TOKEN_eigenVectors '(' pyexp ')'       {
+            $$ = new Foam::tensorField(Foam::eigenVectors(*$3));
+            delete $3;
+          }
         | TOKEN_inv '(' ptexp ')'       {
             $$ = new Foam::tensorField( Foam::inv(*$3) );
             delete $3;
@@ -2318,6 +2442,10 @@ ptexp:  ptexp '+' ptexp 		{
           }
         | TOKEN_dev '(' ptexp ')'       {
             $$ = new Foam::tensorField( Foam::dev(*$3) );
+            delete $3;
+          }
+        | TOKEN_dev2 '(' ptexp ')'       {
+            $$ = new Foam::tensorField( Foam::dev2(*$3) );
             delete $3;
           }
         | ptexp '.' tensorComponentSwitch TOKEN_transpose '(' ')'  {
@@ -2421,6 +2549,14 @@ pyexp:  pyexp '+' pyexp 		{
             $$ = new Foam::symmTensorField( Foam::symm(*$3) );
             delete $3;
           }
+        | TOKEN_twoSymm '(' pyexp ')'       {
+            $$ = new Foam::symmTensorField( Foam::twoSymm(*$3) );
+            delete $3;
+          }
+        | TOKEN_twoSymm '(' ptexp ')'       {
+            $$ = new Foam::symmTensorField( Foam::twoSymm(*$3) );
+            delete $3;
+          }
         | TOKEN_inv '(' pyexp ')'       {
             $$ = new Foam::symmTensorField( Foam::inv(*$3) );
             delete $3;
@@ -2431,6 +2567,10 @@ pyexp:  pyexp '+' pyexp 		{
           }
         | TOKEN_dev '(' pyexp ')'       {
             $$ = new Foam::symmTensorField( Foam::dev(*$3) );
+            delete $3;
+          }
+        | TOKEN_dev2 '(' pyexp ')'       {
+            $$ = new Foam::symmTensorField( Foam::dev2(*$3) );
             delete $3;
           }
         | TOKEN_sqr '(' pvexp ')'       {
@@ -2513,6 +2653,18 @@ phexp:  phexp '+' phexp 		{
             delete $2;
           }
         | '(' phexp ')'		        { $$ = $2; }
+        | TOKEN_sph '(' ptexp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
+        | TOKEN_sph '(' pyexp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
+        | TOKEN_sph '(' phexp ')'       {
+            $$ = new Foam::sphericalTensorField( Foam::sph(*$3) );
+            delete $3;
+          }
         | phexp '.' tensorComponentSwitch TOKEN_transpose '(' ')'  {
             $$ = $1;
           }
@@ -2618,9 +2770,10 @@ plexp: pexp '<' pexp  {
             delete $2;
           }
         | evaluatePointLogicalFunction restOfFunction
-//    | TOKEN_PLID		{
-//            $$=driver.getField<Foam::bool>(*$1);delete $1;
-//    }
+    | TOKEN_PLID		{
+            $$=driver.getVariable<bool>(*$1,driver.pointSize()).ptr();
+            delete $1;
+      }
 ;
 
 evaluatePointLogicalFunction: TOKEN_FUNCTION_PLID '(' eatCharactersSwitch

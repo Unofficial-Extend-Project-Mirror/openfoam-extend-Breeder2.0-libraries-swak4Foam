@@ -38,7 +38,7 @@ SourceFiles
     simpleFunctionObject.C
 
 Contributors/Copyright:
-    2008-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2008-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -55,6 +55,7 @@ Contributors/Copyright:
 #include "NamedEnum.H"
 
 #include "swak.H"
+#include "switchableNotImplemented.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -72,10 +73,11 @@ class simpleFunctionObject
     public functionObject
 {
 public:
-    enum outputControlMode {
+    enum outputControlModeType {
         ocmTimestep,
         ocmDeltaT,
-        ocmOutputTime
+        ocmOutputTime,
+        ocmStartup
     };
 private:
     // Private Member Functions
@@ -101,8 +103,8 @@ private:
     label timeSteps_;
 
     //- possible outputControl-modes
-    static const NamedEnum<outputControlMode,3> outputControlModeNames_;
-    outputControlMode outputControlMode_;
+    static const NamedEnum<outputControlModeType,4> outputControlModeTypeNames_;
+    outputControlModeType outputControlMode_;
 
     //- how many time-steps between outputs
     label outputInterval_;
@@ -115,6 +117,9 @@ private:
     scalar lastWrite_;
 
 protected:
+
+    outputControlModeType outputControlMode() const
+        { return outputControlMode_; }
 
     dictionary dict_;
 
@@ -160,6 +165,13 @@ public:
     //- execute is called at each ++ or += of the time-loop
     virtual bool execute(const bool forceWrite);
 
+#ifdef FOAM_FUNCTIONOBJECT_EXECUTE_HAS_NO_FORCE
+    bool execute()
+        {
+            return execute(false);
+        }
+#endif
+
     //- Read and set the function object if it's data has changed
     virtual bool read(const dictionary& dict);
 
@@ -169,12 +181,18 @@ public:
 #ifdef FOAM_FUNCTIONOBJECT_NEEDS_UPDATEMESH
     // make functionObject happy but fail because this is not an implementation
     virtual void updateMesh(const mapPolyMesh&) {
-        notImplemented("simpleFunctionObject::updateMesh");
+        switchableNotImplemented(
+            "simpleFunctionObject::updateMesh",
+            dict()
+        );
     }
 
     // make functionObject happy but fail because this is not an implementation
     virtual void movePoints(const polyMesh&) {
-        notImplemented("simpleFunctionObject::movePoints");
+        switchableNotImplemented(
+            "simpleFunctionObject::movePoints",
+            dict()
+        );
     }
 #endif
 

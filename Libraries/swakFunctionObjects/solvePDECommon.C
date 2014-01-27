@@ -29,9 +29,10 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2011, 2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011, 2013-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
- SWAK Revision: $Id:  $ 
+ SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
 
 #include "solvePDECommon.H"
@@ -61,7 +62,10 @@ Foam::solvePDECommon::solvePDECommon
 ):
     active_(true),
     obr_(obr),
-    name_(name)
+    name_(name),
+    steady_(false),
+    relaxUnsteady_(false),
+    relaxLastIteration_(false)
 {
     if (!isA<polyMesh>(obr))
     {
@@ -75,8 +79,24 @@ Foam::solvePDECommon::solvePDECommon
 Foam::solvePDECommon::~solvePDECommon()
 {}
 
+void Foam::solvePDECommon::timeSet()
+{
+    // Do nothing
+}
+
+bool Foam::solvePDECommon::doRelax(bool last)
+{
+    return
+        (steady_ || relaxUnsteady_)
+        &&
+        (!last || relaxLastIteration_);
+}
+
 void Foam::solvePDECommon::read(const dictionary& dict)
 {
+    if(debug) {
+        Info << "Foam::solvePDECommon::read()" << endl;
+    }
     if(active_) {
         solveAt_=
             solveAtNames_.read(
@@ -85,17 +105,46 @@ void Foam::solvePDECommon::read(const dictionary& dict)
         fieldName_=word(dict.lookup("fieldName"));
 
         steady_=readBool(dict.lookup("steady"));
+        if(steady_) {
+            relaxUnsteady_=false;
+        } else {
+            if(dict.found("relaxUnsteady")) {
+                relaxUnsteady_=readBool(dict.lookup("relaxUnsteady"));
+            } else {
+                WarningIn("solvePDECommon::read(const dictionary& dict)")
+                    << "If you want the unsteady run to use relaxation set "
+                        << "'relaxUnsteady true;' in " << dict.name()
+                        << endl;
+                relaxUnsteady_=false;
+            }
+        }
+        if(steady_ || relaxUnsteady_) {
+            if(dict.found("relaxLastIteration")) {
+                relaxLastIteration_=readBool(dict.lookup("relaxLastIteration"));
+            } else {
+                WarningIn("solvePDECommon::read(const dictionary& dict)")
+                    << "If in case of relaxation you want to relax the last "
+                        << "iteration as well set "
+                        << "'relaxLastIteration true;' in " << dict.name()
+                        << endl;
+                relaxLastIteration_=false;
+            }
+        }
+        writeBeforeAfter_=dict.lookupOrDefault<bool>("writeBeforeAfter",false);
     }
 }
 
 void Foam::solvePDECommon::execute()
 {
+    if(debug) {
+        Info << "Foam::solvePDECommon::execute()" << endl;
+    }
     if(solveAt_==saTimestep) {
         const fvMesh& mesh = refCast<const fvMesh>(obr_);
 
-        solve();
+        solveWrapper();
 
-        // as this is executed after the general write, write the field separately 
+        // as this is executed after the general write, write the field separately
         if(mesh.time().outputTime()) {
             writeData();
         }
@@ -105,18 +154,44 @@ void Foam::solvePDECommon::execute()
 
 void Foam::solvePDECommon::end()
 {
+    if(debug) {
+        Info << "Foam::solvePDECommon::end()" << endl;
+    }
     execute();
+}
+
+void Foam::solvePDECommon::solveWrapper()
+{
+    if(debug) {
+        Info << "Foam::solvePDECommon::solveWrapper()" << endl;
+    }
+    const fvMesh& mesh = refCast<const fvMesh>(obr_);
+
+    if(writeBeforeAfter_) {
+        Info << "Write " << fieldName_ << " before" << endl;
+        this->writeOldField();
+    }
+
+    solve();
+
+    if(writeBeforeAfter_ && !mesh.time().outputTime()) {
+        Info << "Write " << fieldName_ << " after" << endl;
+        this->writeNewField();
+    }
 }
 
 void Foam::solvePDECommon::write()
 {
+    if(debug) {
+        Info << "Foam::solvePDECommon::write()" << endl;
+    }
     const fvMesh& mesh = refCast<const fvMesh>(obr_);
     if(
         solveAt_==saWrite
         &&
         mesh.time().outputTime()
     ) {
-        solve();
+        solveWrapper();
 
         writeData();
     }

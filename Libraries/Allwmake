@@ -4,7 +4,11 @@ BISONPATH=`which bison`
 NOBISON=$?
 
 if [[ $NOBISON != 0 ]]; then
+    echo
     echo "No 'bison' found. This is absolutely essential for swak4Foam. Can't go on"
+    echo "Every Linux has a binary package that installs bison (http://www.gnu.org/software/bison/). Install it. Then go on"
+    echo "BTW: it was listed as a requirement in the README. You read that, didn't you?"
+    echo
     exit 42
 fi
 
@@ -12,7 +16,11 @@ FLEXPATH=`which flex`
 NOFLEX=$?
 
 if [[ $NOFLEX != 0 ]]; then
+    echo
     echo "No 'flex' found. This is absolutely essential for swak4Foam. Can't go on"
+    echo "Every Linux has a binary package that installs flex (http://flex.sourceforge.net). Install it. Then go on"
+    echo "BTW: it was listed as a requirement in the README. You read that, didn't you?"
+    echo
     exit 42
 fi
 
@@ -30,6 +38,14 @@ if [[ $BISONVER < 2.4 ]]; then
 	echo "I continue under protest. Should swak4Foam work with your bison-version, then please report it"
 	echo
 	echo
+    fi
+fi
+
+if [[ $BISONVER > 2.999 ]]; then
+    echo "swak4Foam only confirmed to work with Bison 2.x"
+    if [ -z $DEVELOPE_FOR_NEW_BISON ]; then
+	echo "Set the environment variable DEVELOPE_FOR_NEW_BISON if you want to continue anyway."
+	exit 42
     fi
 fi
 
@@ -52,7 +68,7 @@ fi
 
 of_version_major=`echo $WM_PROJECT_VERSION | sed -e 's=\([0-9]*\).*=\1='`
 of_version_minor=`echo $WM_PROJECT_VERSION | sed -e 's=[0-9]*\.\([0-9]*\).*=\1='`
-of_version_patch=`echo $WM_PROJECT_VERSION | sed -e 's=[0-9]*\.[0-9]*\.\([0-9a-z]*\).*=\1=' -e 's=x=-1='`
+of_version_patch=`echo $WM_PROJECT_VERSION | sed -e 's=[0-9]*\.[0-9]*\.\([0-9a-z]*\).*=\1=' -e 's=[0-9]*\.[0-9]*=x=' -e 's=x=-1='`
 echo "OpenFOAM-version: Major $of_version_major Minor $of_version_minor Patch $of_version_patch (-1 == x)"
 
 versionFile=swak4FoamParsers/foamVersion4swak.H
@@ -84,7 +100,14 @@ else
     mv $versionFile.tmp $versionFile
 fi
 
-wmake libso swak4FoamParsers
+wmakeLnInclude simpleFunctionObjects
+
+if [[ $WM_NCOMPPROCS>3 ]]; then
+    echo "WM_NCOMPPROCS $WM_NCOMPPROCS will cause race conditions with the grammars. Resetting to 3 for this library"
+    ( export WM_NCOMPPROCS=3; wmake libso swak4FoamParsers )
+else
+    wmake libso swak4FoamParsers
+fi
 
 PARSERSOK=$?
 
@@ -93,33 +116,25 @@ if [[ $PARSERSOK != 0 ]]; then
     exit 42
 fi
 
+if [[ $WM_NCOMPPROCS>1 ]]; then
+    echo "WM_NCOMPPROCS $WM_NCOMPPROCS will cause race conditions with the grammars. Resetting to 1 for this library"
+    ( export WM_NCOMPPROCS=1; wmake libso swakLagrangianParser)
+else
+    wmake libso swakLagrangianParser
+fi
+
+
 wmake libso groovyBC
 
 wmake libso swakFunctionObjects
 
-unset WE_HAVE_SIMPLE_FUNCTION_OBJECTS
-
-if [ -d simpleFunctionObjects ]; then
-    WE_HAVE_SIMPLE_FUNCTION_OBJECTS=1
-
-    wmake libso simpleFunctionObjects
-else
-    if [ -d "$WM_PROJECT_USER_DIR/Libraries/simpleFunctionObjects/lnInclude" ]; then
-	WE_HAVE_SIMPLE_FUNCTION_OBJECTS=1
-    fi
-fi
+wmake libso simpleFunctionObjects
 
 wmake libso simpleLagrangianFunctionObjects
 
 wmake libso simpleSearchableSurfaces
 
-if [ "$WE_HAVE_SIMPLE_FUNCTION_OBJECTS" ]; then
-    wmake libso simpleSwakFunctionObjects
-else
-    echo "\n   simpleSwakFunctionObjects not compiled because no simpleFunctionObjects installation found\n"
-fi
-
-unset WE_HAVE_SIMPLE_FUNCTION_OBJECTS
+wmake libso simpleSwakFunctionObjects
 
 wmake libso swakTopoSources
 
@@ -141,7 +156,12 @@ then
 	    ln -s $mysource $mytarget
 	fi
     done
-    wmake libso swakFiniteArea
+    if [[ $WM_NCOMPPROCS>2 ]]; then
+	echo "WM_NCOMPPROCS $WM_NCOMPPROCS will cause race conditions with the grammars. Resetting to 2 for this library"
+	(export WM_NCOMPPROCS=2;     wmake libso swakFiniteArea)
+    else
+	 wmake libso swakFiniteArea
+    fi
 fi
 
 wmake libso groovyStandardBCs
@@ -162,7 +182,9 @@ then
     fi
     wmake libso swakPythonIntegration
 else
-    echo "SWAK_PYTHON_INCLUDE not defined .... no Python-Integration"
+    echo
+    echo "SWAK_PYTHON_INCLUDE not defined .... no Python-Integration. Most people are fine without it"
+    echo
 fi
 
 (cd functionPlugins; wmake all)
@@ -176,4 +198,8 @@ then
 	echo "Compiling user function-plugin $plug"
 	wmake libso $plugins
     done
+else
+    echo
+    echo "If you have your own function-plugins you can specify them using the SWAK_USER_PLUGINS environment variable and they would be compiled now. If you don't know what this means: don't bother. You propably don't need it"
+    echo
 fi

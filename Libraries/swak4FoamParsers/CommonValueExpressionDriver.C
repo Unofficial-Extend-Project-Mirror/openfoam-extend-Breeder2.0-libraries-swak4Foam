@@ -180,20 +180,6 @@ CommonValueExpressionDriver::CommonValueExpressionDriver(
     );
 
     readTables(dict);
-
-    if(dict.found("aliases")) {
-        dictionary aliasDict(dict.subDict("aliases"));
-        wordList toc(aliasDict.toc());
-        forAll(toc,i) {
-            aliases_.insert(
-                toc[i],
-                word(aliasDict[toc[i]])
-            );
-        }
-        if(debug) {
-            Info << "Reading aliases: " << aliases_ << endl;
-        }
-    }
 }
 
 CommonValueExpressionDriver::CommonValueExpressionDriver(
@@ -347,6 +333,20 @@ void CommonValueExpressionDriver::readTables(const dictionary &dict)
     if(dict.found("lookuptables")) {
         readTables(dict.lookup("lookuptables"),lookup_);
     }
+
+    if(dict.found("aliases")) {
+        dictionary aliasDict(dict.subDict("aliases"));
+        wordList toc(aliasDict.toc());
+        forAll(toc,i) {
+            aliases_.insert(
+                toc[i],
+                word(aliasDict[toc[i]])
+            );
+        }
+        if(debug) {
+            Info << "Reading aliases: " << aliases_ << endl;
+        }
+    }
 }
 
 void CommonValueExpressionDriver::setSearchBehaviour(
@@ -394,7 +394,11 @@ autoPtr<CommonValueExpressionDriver> CommonValueExpressionDriver::New
         )   << "Unknown  CommonValueExpressionDriver type " << driverType
             << endl << endl
             << "Valid valueTypes are :" << endl
+#ifdef FOAM_HAS_SORTED_TOC
             << dictionaryConstructorTablePtr_->sortedToc()
+#else
+            << dictionaryConstructorTablePtr_->toc()
+#endif
             << exit(FatalError);
     }
 
@@ -428,7 +432,11 @@ autoPtr<CommonValueExpressionDriver> CommonValueExpressionDriver::New
         )   << "Unknown  CommonValueExpressionDriver type " << driverType
             << endl << endl
             << "Valid valueTypes are :" << endl
+#ifdef FOAM_HAS_SORTED_TOC
             << idNameConstructorTablePtr_->sortedToc()
+#else
+            << idNameConstructorTablePtr_->toc()
+#endif
             << exit(FatalError);
     }
 
@@ -858,6 +866,15 @@ bool CommonValueExpressionDriver::update()
 
 void CommonValueExpressionDriver::updateSpecialVariables(bool force)
 {
+    if(debug) {
+        Info << "CommonValueExpressionDriver::updateSpecialVariables(bool force)"
+            << " Force: " << force << endl;
+    }
+    bool updated=this->update();
+    if(debug) {
+        Info << "Updated: " << updated << endl;
+    }
+
     if(specialVariablesIndex_<0) {
         if(debug) {
             Pout << "First update: " << mesh().time().timeIndex() << endl;
@@ -867,11 +884,16 @@ void CommonValueExpressionDriver::updateSpecialVariables(bool force)
             StoredExpressionResult &v=storedVariables_[i];
             if(!v.hasValue()) {
                 if(debug) {
-                    Pout << "First valuate: " << v.initialValueExpression()
+                    Pout << "First value: " << v.initialValueExpression()
                         << " -> " << v.name() << endl;
                 }
                 parse(v.initialValueExpression());
                 v=result_;
+                if(debug) {
+                    Info << "Parser size: " << this->size() << endl;
+                    Info << "Calculated: " << result_ << endl;
+                    Info << "Stored: " << v << endl;
+                }
             }
         }
     }
@@ -1335,6 +1357,60 @@ word CommonValueExpressionDriver::getTypeOfSet(const word &inName) const
     }
 }
 
+bool CommonValueExpressionDriver::isCellSet(const word &name)
+{
+    if(getTypeOfSet(name)=="cellSet") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CommonValueExpressionDriver::isCellZone(const word &name)
+{
+    if(mesh().cellZones().findZoneID(name)>=0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CommonValueExpressionDriver::isFaceSet(const word &name)
+{
+    if(getTypeOfSet(name)=="faceSet") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CommonValueExpressionDriver::isFaceZone(const word &name)
+{
+    if(mesh().faceZones().findZoneID(name)>=0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CommonValueExpressionDriver::isPointSet(const word &name)
+{
+    if(getTypeOfSet(name)=="pointSet") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CommonValueExpressionDriver::isPointZone(const word &name)
+{
+    if(mesh().pointZones().findZoneID(name)>=0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 void CommonValueExpressionDriver::setTrace(
     bool scanning,
     bool parsing
@@ -1475,6 +1551,10 @@ bool CommonValueExpressionDriver::hasDataToWrite() const
 
 void CommonValueExpressionDriver::getData(const dictionary &dict)
 {
+    if(debug) {
+        Info << "CommonValueExpressionDriver::getData(const dictionary &dict)" << endl;
+    }
+
     if(dict.found("storedVariables")) {
         storedVariables_=List<StoredExpressionResult>(
             dict.lookup("storedVariables")
@@ -1484,6 +1564,14 @@ void CommonValueExpressionDriver::getData(const dictionary &dict)
 
 void CommonValueExpressionDriver::prepareData(dictionary &dict) const
 {
+    if(debug) {
+        Info << "CommonValueExpressionDriver::prepareData(dictionary &dict)" << endl;
+    }
+    bool updated=const_cast<CommonValueExpressionDriver&>(*this).update();
+    if(debug && updated) {
+        Info << "Updated before write" << endl;
+    }
+
     if(storedVariables_.size()>0) {
         const_cast<CommonValueExpressionDriver&>(
             *this
@@ -1571,13 +1659,6 @@ vector CommonValueExpressionDriver::getPositionOfMaximum(
 {
     return getExtremePosition(biggerOp(),vals,locs);
 
-}
-
-word CommonValueExpressionDriver::getHex(const void *ptr) const
-{
-    std::ostringstream makeHex;
-    makeHex << std::hex << (void*)ptr;
-    return word(makeHex.str());
 }
 
 std::string CommonValueExpressionDriver::getContextString()
@@ -1685,7 +1766,7 @@ bool CommonValueExpressionDriver::hasAlias(const word &name) const
     return aliases_.found(name);
 }
 
-word CommonValueExpressionDriver::getAlias(const word &name) const
+const word &CommonValueExpressionDriver::getAlias(const word &name) const
 {
     if(!aliases_.found(name)){
         FatalErrorIn("CommonValueExpressionDriver::getAlias(const word &name) const")
@@ -1699,6 +1780,13 @@ word CommonValueExpressionDriver::getAlias(const word &name) const
     } else {
         return aliases_[name];
     }
+}
+
+const word &CommonValueExpressionDriver::resolveAlias(const word &name) const {
+    if(hasAlias(name)) {
+        return getAlias(name);
+    }
+    return name;
 }
 
 } // namespace

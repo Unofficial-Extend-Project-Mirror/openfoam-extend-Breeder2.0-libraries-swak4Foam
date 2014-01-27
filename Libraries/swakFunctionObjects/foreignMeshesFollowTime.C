@@ -29,7 +29,8 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id:  $ 
 \*---------------------------------------------------------------------------*/
@@ -76,6 +77,11 @@ void Foam::foreignMeshesFollowTime::followCurrentTime()
         );
         Info << " actual time: t=" << usedTime << endl;
     }
+}
+
+void Foam::foreignMeshesFollowTime::timeSet()
+{
+    // Do nothing
 }
 
 void Foam::foreignMeshesFollowTime::read(const dictionary& dict)

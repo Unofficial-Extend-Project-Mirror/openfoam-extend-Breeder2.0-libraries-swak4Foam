@@ -27,7 +27,7 @@ Description
 Contributors/Copyright:
     2010-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
 
- SWAK Revision: $Id:  $ 
+ SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
 %{                                          /* -*- C++ -*- */
 #include "SubsetValueExpressionDriverYY.H"
@@ -164,6 +164,7 @@ rand                  { BEGIN(needsIntegerParameter); return token::TOKEN_rand; 
 randFixed             { BEGIN(needsIntegerParameter); return token::TOKEN_randFixed; }
 id                    return token::TOKEN_id;
 cpu                   return token::TOKEN_cpu;
+weight                return token::TOKEN_weight;
 flip                  return token::TOKEN_flip;
 randNormal            { BEGIN(needsIntegerParameter); return token::TOKEN_randNormal; }
 randNormalFixed       { BEGIN(needsIntegerParameter); return token::TOKEN_randNormalFixed; }
@@ -226,8 +227,8 @@ eigenVectors           return token::TOKEN_eigenVectors;
         yylval->name = ptr; return token::TOKEN_HID;
     } else if(driver.is<Foam::scalar>(*ptr)) {
         yylval->name = ptr; return token::TOKEN_SID;
-        //    } else if(driver.is<Foam::bool>(*ptr)) {
-        //        yylval->name = ptr; return token::TOKEN_LID;
+    } else if(driver.isVariable<bool>(*ptr)) {
+        yylval->name = ptr; return token::TOKEN_LID;
     } else if(driver.is<Foam::vector>(*ptr,true)) {
         yylval->name = ptr; return token::TOKEN_PVID;
     } else if(driver.is<Foam::tensor>(*ptr,true)) {
@@ -238,8 +239,8 @@ eigenVectors           return token::TOKEN_eigenVectors;
         yylval->name = ptr; return token::TOKEN_PHID;
     } else if(driver.is<Foam::scalar>(*ptr,true)) {
         yylval->name = ptr; return token::TOKEN_PSID;
-        //    } else if(driver.is<Foam::bool>(*ptr,true)) {
-        //        yylval->name = ptr; return token::TOKEN_PLID;
+    } else if(driver.isVariable<bool>(*ptr,true)) {
+        yylval->name = ptr; return token::TOKEN_PLID;
     } else if(driver.existsPluginFunction(*ptr)) {
         // OK. We'll create the function two times. But this is less messy
         // than passing it two times

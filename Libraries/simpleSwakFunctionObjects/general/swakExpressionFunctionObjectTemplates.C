@@ -40,6 +40,8 @@ Contributors/Copyright:
 #include "fvMesh.H"
 #include "fvCFD.H"
 
+#include "AccumulationCalculation.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -49,45 +51,89 @@ namespace Foam
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template <class T>
-void swakExpressionFunctionObject::writeTheData(CommonValueExpressionDriver &driver)
+void swakExpressionFunctionObject::writeTheData(
+    CommonValueExpressionDriver &driver
+)
 {
     Field<T> result(driver.getResult<T>());
+
+    autoPtr<AccumulationCalculation<T> > pCalculator;
+
+    if(maskExpression_=="") {
+        pCalculator.set(
+            new AccumulationCalculation<T>(
+                result,
+                driver.result().isPoint(),
+                driver
+            )
+        );
+    } else {
+        bool isPoint=driver.result().isPoint();
+
+        driver.parse(maskExpression_);
+
+        autoPtr<Field<bool> > maskValues;
+        if(
+            driver.CommonValueExpressionDriver::getResultType()
+            ==
+            pTraits<bool>::typeName
+        ) {
+            maskValues.reset(
+                driver.getResult<bool>().ptr()
+            );
+        } else if(
+            driver.CommonValueExpressionDriver::getResultType()
+            ==
+            pTraits<scalar>::typeName
+        ) {
+            scalarField rawMask(driver.getResult<scalar>());
+            maskValues.reset(
+                new Field<bool>(rawMask.size(),false)
+            );
+            forAll(rawMask,i) {
+                if(rawMask[i]>SMALL) {
+                    maskValues()[i]=true;
+                }
+            }
+        } else {
+            FatalErrorIn("swakExpressionFunctionObject::writeTheData")
+                << "Don't know how to handle logical expressions of type "
+                    << driver.CommonValueExpressionDriver::getResultType()
+                    << " from " << maskExpression_
+                    << endl
+                    << exit(FatalError);
+        }
+        if(maskValues().size()!=result.size()) {
+            FatalErrorIn("swakExpressionFunctionObject::writeTheData")
+                << "Size of mask " << maskExpression_ << " not equal to "
+                    << expression_ << " (" << maskValues().size() << " vs "
+                    << result.size() << ")"
+                    << endl
+                    << exit(FatalError);
+        }
+
+        pCalculator.set(
+            new AccumulationCalculation<T>(
+                result,
+                isPoint,
+                driver,
+                maskValues
+            )
+        );
+    }
+
+    AccumulationCalculation<T> &calculator=pCalculator();
 
     Field<T> results(accumulations_.size());
 
     forAll(accumulations_,i) {
-        const NumericAccumulationNamedEnum::value accu=accumulations_[i];
-        T val=pTraits<T>::zero;
+        const NumericAccumulationNamedEnum::accuSpecification accu=
+            accumulations_[i];
+        T val=calculator(accu);
 
-        switch(accu) {
-            case NumericAccumulationNamedEnum::numMin:
-                val=gMin(result);
-                break;
-            case NumericAccumulationNamedEnum::numMax:
-                val=gMax(result);
-                break;
-            case NumericAccumulationNamedEnum::numSum:
-                val=gSum(result);
-                break;
-            case NumericAccumulationNamedEnum::numAverage:
-                val=gAverage(result);
-                break;
-            // case NumericAccumulationNamedEnum::numSumMag:
-            //     val=gSumMag(result);
-            //     break;
-            case NumericAccumulationNamedEnum::numWeightedAverage:
-                val=driver.calcWeightedAverage(result);
-                break;
-            default:
-                WarningIn("swakExpressionFunctionObject::writeData")
-                    << "Unimplemented accumultation type "
-                        << NumericAccumulationNamedEnum::names[accu]
-                        << ". Currently only 'min', 'max', 'sum', 'weightedAverage' and 'average' are supported"
-                        << endl;
-        }
         results[i]=val;
         if(verbose()) {
-            Info << " " << NumericAccumulationNamedEnum::names[accu]
+            Info << " " << accu
                 << "=" << val;
         }
     }

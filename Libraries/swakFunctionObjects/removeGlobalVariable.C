@@ -29,7 +29,8 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2011-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -58,6 +59,11 @@ Foam::removeGlobalVariable::removeGlobalVariable
 
 Foam::removeGlobalVariable::~removeGlobalVariable()
 {}
+
+void Foam::removeGlobalVariable::timeSet()
+{
+    // Do nothing
+}
 
 void Foam::removeGlobalVariable::read(const dictionary& dict)
 {

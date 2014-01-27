@@ -38,7 +38,8 @@ SourceFiles
     readAndUpdateFields.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -152,6 +153,9 @@ public:
         {
             return name_;
         }
+
+        //- Called when time was set at the end of the Time::operator++ 
+        virtual void timeSet();         
 
         //- Read the field min/max data
         virtual void read(const dictionary&);

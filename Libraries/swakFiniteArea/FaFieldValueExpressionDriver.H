@@ -99,6 +99,9 @@ private:
 public:
     TypeName("FaFieldValueExpressionDriver");
 
+    //- entity this driver operates on
+    typedef faMesh EntityType;
+
     static const word &driverName() { return driverName_; }
 
     //- simpler Constructor
@@ -114,6 +117,13 @@ public:
 
     //- Construct from an id
     FaFieldValueExpressionDriver(const word& id,const fvMesh&mesh);
+
+    autoPtr<CommonValueExpressionDriver> clone() const
+        {
+            return autoPtr<CommonValueExpressionDriver>(
+                new FaFieldValueExpressionDriver(*this)
+            );
+        }
 
     virtual ~FaFieldValueExpressionDriver();
 

@@ -38,9 +38,10 @@ SourceFiles
     solvePDECommon.C
 
 Contributors/Copyright:
-    2011, 2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011, 2013-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
- SWAK Revision: $Id$
+ SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
 
 #ifndef solvePDECommon_H
@@ -92,14 +93,35 @@ protected:
     //- is this a steady calculation
     bool steady_;
 
+    //- should unsteady runs allow relaxation too
+    bool relaxUnsteady_;
+
+    //- the last iteration will also be relaxed
+    bool relaxLastIteration_;
+
+    //- should we relax?
+    bool doRelax(bool last);
+
+private:
     //- do the actual solving
     virtual void solve() = 0;
+
+protected:
+    //- Wrapper around solve()
+    void solveWrapper();
 
     //- write specific data
     virtual void writeData() = 0;
 
     static const NamedEnum<solveAt,3> solveAtNames_;
     solveAt solveAt_;
+
+    //- should the fields before and after be written?
+    bool writeBeforeAfter_;
+
+    virtual void writeOldField() = 0;
+
+    virtual void writeNewField() = 0;
 
 public:
 
@@ -125,6 +147,9 @@ public:
 
 
     // Member Functions
+
+    //- Called when time was set at the end of the Time::operator++ 
+    virtual void timeSet();         
 
     //- Read the forces data
     virtual void read(const dictionary&);

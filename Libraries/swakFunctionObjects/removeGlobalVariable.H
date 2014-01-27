@@ -38,7 +38,8 @@ SourceFiles
     removeGlobalVariable.C
 
 Contributors/Copyright:
-    2011, 2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011, 2013-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -97,6 +98,9 @@ public:
 
 
     // Member Functions
+
+    //- Called when time was set at the end of the Time::operator++ 
+    virtual void timeSet();         
 
     //- Read the forces data
     virtual void read(const dictionary&);

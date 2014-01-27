@@ -29,7 +29,8 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2011, 2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011, 2013-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -67,6 +68,11 @@ Foam::createSampledSet::createSampledSet
 
 Foam::createSampledSet::~createSampledSet()
 {}
+
+void Foam::createSampledSet::timeSet()
+{
+    // Do nothing
+}
 
 void Foam::createSampledSet::read(const dictionary& dict)
 {
