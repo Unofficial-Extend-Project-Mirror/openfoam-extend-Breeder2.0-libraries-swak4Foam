@@ -1,8 +1,14 @@
-include $(OBJECTS_DIR)/../mybison
-include $(OBJECTS_DIR)/../myflex
-sinclude $(OBJECTS_DIR)/../mydependencies
-
 include $(OBJECTS_DIR)/../../../rules/versionOptions
+
+ifeq "$(WMAKE_NEW_CONVENTION)" "new"
+  include $(OBJECTS_DIR)/../mybisonNew
+  include $(OBJECTS_DIR)/../myflexNew
+else
+  include $(OBJECTS_DIR)/../mybison
+  include $(OBJECTS_DIR)/../myflex
+  
+  sinclude $(OBJECTS_DIR)/../mydependencies
+endif
 
 EXE_INC = -I$(OBJECTS_DIR) \
     $(FOAM_DEV_OPTION) 	\
@@ -10,6 +16,7 @@ EXE_INC = -I$(OBJECTS_DIR) \
     -I$(LIB_SRC)/sampling/lnInclude \
     $(FILEFORMATS_INC) \
     -I$(LIB_SRC)/triSurface/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/surfMesh/lnInclude \
     -I$(LIB_SRC)/lagrangian/basic/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude
@@ -19,5 +26,6 @@ LIB_LIBS = -lfiniteVolume \
 	-lsampling \
 	$(FILEFORMATS_LIB) \
         -llagrangian \
+	-ldynamicMesh \
 	-lsurfMesh \
 	-lmeshTools

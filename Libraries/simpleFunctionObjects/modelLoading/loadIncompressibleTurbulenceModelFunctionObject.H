@@ -38,16 +38,24 @@ SourceFiles
     loadIncompressibleTurbulenceModelFunctionObject.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
- SWAK Revision: $Id$ 
+ SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
 
 #ifndef loadIncompressibleTurbulenceModelFunctionObject_H
 #define loadIncompressibleTurbulenceModelFunctionObject_H
 
 #include "modelLoadingFunctionObject.H"
+
+#include "swakTurbulence.H"
+
+#ifdef FOAM_NEW_TURBULENCE_STRUCTURE
+#include "singlePhaseTransportModel.H"
+#include "turbulentTransportModel.H"
+#else
 #include "incompressible/turbulenceModel/turbulenceModel.H"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -29,7 +29,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2013, 2015 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2013, 2015 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -363,7 +363,15 @@ template <typename Type>
 Type AccumulationCalculation<Type>::maximum()
 {
     if(!hasMaximum_) {
-        maximum_=gMax(data());
+        if(this->size()>0) {
+            maximum_=gMax(data());
+        } else {
+#ifdef FOAM_PTRAITS_HAS_ROOTMAX
+            maximum_=pTraits<Type>::max/pTraits<scalar>::rootMax;
+#else
+            maximum_=pTraits<Type>::max/sqrt(pTraits<scalar>::max);
+#endif
+        }
         hasMaximum_=true;
     }
     return maximum_;
@@ -373,7 +381,15 @@ template <typename Type>
 Type AccumulationCalculation<Type>::minimum()
 {
     if(!hasMinimum_) {
-        minimum_=gMin(data());
+        if(this->size()>0) {
+            minimum_=gMin(data());
+        } else {
+#ifdef FOAM_PTRAITS_HAS_ROOTMAX
+            minimum_=pTraits<Type>::min/pTraits<scalar>::rootMax;
+#else
+            minimum_=pTraits<Type>::min/sqrt(pTraits<scalar>::max);
+#endif
+        }
         hasMinimum_=true;
     }
     return minimum_;

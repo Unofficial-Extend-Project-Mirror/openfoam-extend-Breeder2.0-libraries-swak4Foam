@@ -34,7 +34,7 @@ Application
 Description
 
 Contributors/Copyright:
-    2011-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -181,10 +181,14 @@ void reportValues(
         entName
     );
 
+    const word aName("aLongAliasNameThatIsNotLikelyToClashWithExistingFields");
+
+    driver.addAlias(aName,fieldName);
+
     Field<Type> result(
         driver.evaluate<Type>(
             exprString(
-                fieldName,
+                aName,
                 dictionary::null
             )
         )

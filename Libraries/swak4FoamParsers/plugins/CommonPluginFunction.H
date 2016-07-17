@@ -39,7 +39,7 @@ SourceFiles
     CommonPluginFunctionIO.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -97,7 +97,7 @@ class CommonPluginFunction {
 
     void evaluateInternal(
         const string &content,
-        label &consumed
+        int &consumed
     );
 
 protected:
@@ -223,13 +223,13 @@ public:
     template <typename T>
     tmp<T> evaluate(
         const string &content,
-        label &consumed
+        int &consumed
     );
 
     template <typename T>
     tmp<Field<T> > evaluate(
         const string &content,
-        label &consumed,
+        int &consumed,
         bool isPoint
     );
 };

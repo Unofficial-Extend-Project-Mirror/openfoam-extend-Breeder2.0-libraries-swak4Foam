@@ -36,7 +36,7 @@ SourceFiles
     groovyFlowRateInletVelocityFvPatchVectorField.C
 
 Contributors/Copyright:
-    2011, 2013-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011, 2013-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -50,6 +50,10 @@ Contributors/Copyright:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#if (FOAM_VERSION4SWAK_MINOR>=1 && FOAM_VERSION4SWAK_MAJOR>=2) || FOAM_VERSION4SWAK_MAJOR>2
+#define FOAM_FLOWRATE_BASED_ON_FIXEDVALUE
+#endif
+
 namespace Foam
 {
 /*---------------------------------------------------------------------------*\
@@ -58,7 +62,7 @@ namespace Foam
 
 class groovyFlowRateInletVelocityFvPatchVectorField
 :
-#if FOAM_VERSION4SWAK_MINOR>=1 && FOAM_VERSION4SWAK_MAJOR>=2
+#ifdef FOAM_FLOWRATE_BASED_ON_FIXEDVALUE
     public fixedValueFvPatchVectorField
 #else
     public flowRateInletVelocityFvPatchVectorField
@@ -66,7 +70,7 @@ class groovyFlowRateInletVelocityFvPatchVectorField
 {
     // Private data
 
-#if FOAM_VERSION4SWAK_MINOR>=1 && FOAM_VERSION4SWAK_MAJOR>=2
+#ifdef FOAM_FLOWRATE_BASED_ON_FIXEDVALUE
         //- Name of the flux transporting the field
         word phiName_;
 

@@ -37,7 +37,7 @@ SourceFiles
     swakCompressibleTurbulencePluginFunction.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -47,7 +47,13 @@ Contributors/Copyright:
 
 #include "swakThermophysicalPluginFunction.H"
 
+#include "swakTurbulence.H"
+
+#ifdef FOAM_NEW_TURBULENCE_STRUCTURE
+#include "turbulentFluidThermoModel.H"
+#else
 #include "turbulenceModel.H"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +65,7 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 class swakCompressibleTurbulencePluginFunction
 :
-    public swakThermophysicalPluginFunction
+    public swakThermophysicalPluginFunction<swakFluidThermoType>
 {
     //- Disallow default bitwise assignment
     void operator=(const swakCompressibleTurbulencePluginFunction &);

@@ -37,7 +37,7 @@ SourceFiles
     swakIncompressibleTurbulencePluginFunction.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -47,7 +47,14 @@ Contributors/Copyright:
 
 #include "swakTransportModelsPluginFunction.H"
 
+#include "swakTurbulence.H"
+
+#ifdef FOAM_NEW_TURBULENCE_STRUCTURE
+#include "singlePhaseTransportModel.H"
+#include "turbulentTransportModel.H"
+#else
 #include "turbulenceModel.H"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

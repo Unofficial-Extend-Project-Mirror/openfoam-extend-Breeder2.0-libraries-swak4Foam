@@ -29,7 +29,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2010-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2010-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -382,7 +382,7 @@ namespace Foam {
     }
 
     template<class T>
-    inline autoPtr<T> CommonValueExpressionDriver::getSet(
+    inline autoPtr<T> CommonValueExpressionDriver::getTopoSet(
         const fvMesh &mesh,
         const word &inName,
         SetOrigin &origin
@@ -391,7 +391,7 @@ namespace Foam {
         word name(inName);
         if(this->hasAlias(name)) {
             if(debug) {
-                Pout << "CommonValueExpressionDriver::getSet. Name: " << name
+                Pout << "CommonValueExpressionDriver::getTopoSet. Name: " << name
                     << " is an alias for " << this->getAlias(name) << endl;
             }
             name=this->getAlias(name);
@@ -940,10 +940,16 @@ namespace Foam {
             Info << "Objects in mesh: " << theMesh.names() << endl;
         }
 #ifdef FOAM_NEW_MESH2MESH
+#ifdef FOAM_MESH2MESH_NO_2ND_ORDER_TENSOR
+        return interpolation.mapSrcToTgt(
+            theMesh.lookupObject<T>(fieldName)
+        );
+#else
         return interpolation.mapSrcToTgt(
             theMesh.lookupObject<T>(fieldName),
             eqOp<typename T::value_type>()
         );
+#endif
 #else
         return interpolation.interpolate(
             theMesh.lookupObject<T>(fieldName),
@@ -1081,6 +1087,21 @@ namespace Foam {
     inline bool CommonValueExpressionDriver::isLookup(const word &name) const
     {
         return lookup_.found(name);
+    }
+
+    inline bool CommonValueExpressionDriver::isLookup2D(const word &name) const
+    {
+#ifdef FOAM_HAS_INTERPOLATION2DTABLE
+        return lookup2D_.found(name);
+#else
+        // FatalErrorIn("CommonValueExpressionDriver::getLookup2D")
+        //     << "This Foam-version has no class interpolation2DTable" << nl
+        //         << "Two-dimensional lookup is therefor not supported"
+        //         << endl
+        //         << exit(FatalError);
+        return false;
+#endif
+
     }
 
     template <class Op,class Type>

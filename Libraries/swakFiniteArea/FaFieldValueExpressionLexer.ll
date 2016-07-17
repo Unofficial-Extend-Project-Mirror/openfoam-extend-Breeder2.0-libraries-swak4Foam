@@ -25,7 +25,7 @@ Description
 
 
 Contributors/Copyright:
-    2011-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2011-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -221,6 +221,10 @@ false                  return token::TOKEN_FALSE;
     Foam::word *ptr=new Foam::word (yytext);
     if(driver.isLine(*ptr)) {
         yylval->name = ptr; return token::TOKEN_LINE;
+    } else if(driver.isLookup(*ptr)) {
+        yylval->name = ptr; return token::TOKEN_LOOKUP;
+    } else if(driver.isLookup2D(*ptr)) {
+        yylval->name = ptr; return token::TOKEN_LOOKUP2D;
     } else if(
         driver.isVariable<Foam::areaScalarField::value_type>(*ptr)
         ||

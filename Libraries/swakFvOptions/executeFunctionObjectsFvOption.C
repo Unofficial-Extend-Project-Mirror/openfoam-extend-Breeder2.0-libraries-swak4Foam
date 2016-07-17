@@ -28,7 +28,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Contributors/Copyright:
-    2014-2015 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2014-2015 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -396,7 +396,7 @@ void Foam::fv::executeFunctionObjectsFvOption::makeRelative(
     surfaceScalarField& phi
 ) const
 {
-    if(doCorrect_) {
+    if(doMakeRelative_) {
         const_cast<executeFunctionObjectsFvOption&>(*this).
             executeFunctionObjects("makeRelative(surfaceScalarField& "+phi.name()+")");
     }
@@ -407,7 +407,7 @@ void Foam::fv::executeFunctionObjectsFvOption::makeRelative(
     surfaceScalarField& phi
 ) const
 {
-    if(doCorrect_) {
+    if(doMakeRelative_) {
         const_cast<executeFunctionObjectsFvOption&>(*this).
             executeFunctionObjects("makeRelative(const surfaceScalarField& "+rho.name()+",surfaceScalarField& "+phi.name()+")");
     }
@@ -417,7 +417,7 @@ void Foam::fv::executeFunctionObjectsFvOption::makeRelative(
     FieldField<fvsPatchField, scalar>& phi
 ) const
 {
-    if(doCorrect_) {
+    if(doMakeRelative_) {
         const_cast<executeFunctionObjectsFvOption&>(*this).
             executeFunctionObjects("makeRelative(FieldField<fvsPatchField, scalar>&)");
     }
@@ -428,7 +428,7 @@ void Foam::fv::executeFunctionObjectsFvOption::makeAbsolute(
     surfaceScalarField& phi
 ) const
 {
-    if(doCorrect_) {
+    if(doMakeAbsolute_) {
         const_cast<executeFunctionObjectsFvOption&>(*this).
             executeFunctionObjects("makeAbsolute(surfaceScalarField& "+phi.name()+")");
     }
@@ -439,7 +439,7 @@ void Foam::fv::executeFunctionObjectsFvOption::makeAbsolute(
     surfaceScalarField& phi
 ) const
 {
-    if(doCorrect_) {
+    if(doMakeAbsolute_) {
         const_cast<executeFunctionObjectsFvOption&>(*this).
             executeFunctionObjects("makeAbsolute(const surfaceScalarField& "+rho.name()+",surfaceScalarField& "+phi.name()+")");
     }

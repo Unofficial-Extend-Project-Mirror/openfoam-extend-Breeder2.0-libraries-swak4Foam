@@ -25,7 +25,7 @@ Description
 
 
 Contributors/Copyright:
-    2006-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2006-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
     2013 Georg Reiss <georg.reiss@ice-sf.at>
     2014 Hrvoje Jasak <h.jasak@wikki.co.uk>
 
@@ -174,6 +174,7 @@ autoPtr<T> FieldValueExpressionDriver::evaluatePluginFunction(
 
 %token <name>   TOKEN_LINE  "timeline"
 %token <name>   TOKEN_LOOKUP  "lookup"
+%token <name>   TOKEN_LOOKUP2D  "lookup2D"
 %token <name>   TOKEN_SID   "scalarID"
 %token <name>  TOKEN_VID   "vectorID"
 %token <name>  TOKEN_TID   "tensorID"
@@ -1570,6 +1571,12 @@ fsexp:  TOKEN_surf '(' scalar ')'           {
             ).ptr();
             delete $1; delete $3;
           }
+        | TOKEN_LOOKUP2D '(' fsexp ',' fsexp ')'	     {
+            $$ = driver.makeField<Foam::surfaceScalarField>(
+                driver.getLookup2D(*$1,*$3,*$5)
+            ).ptr();
+            delete $1; delete $3; delete $5;
+          }
 ;
 
 evaluateFaceScalarFunction: TOKEN_FUNCTION_FSID '(' eatCharactersSwitch
@@ -2518,6 +2525,12 @@ exp:    TOKEN_NUM                                   {
                 driver.getLookup(*$1,*$3)
             ).ptr();
             delete $1; delete$3;
+          }
+        | TOKEN_LOOKUP2D '(' exp ',' exp ')'	     {
+            $$ = driver.makeField<Foam::volScalarField>(
+                driver.getLookup2D(*$1,*$3,*$5)
+            ).ptr();
+            delete $1; delete $3; delete $5;
           }
 ;
 
@@ -4794,6 +4807,12 @@ psexp:  TOKEN_point '(' scalar ')'            {
                 driver.getLookup(*$1,*$3)
             ).ptr();
             delete $1; delete $3;
+          }
+          | TOKEN_LOOKUP2D '(' psexp ',' psexp ')'	     {
+            $$ = driver.makePointField<Foam::pointScalarField>(
+                driver.getLookup2D(*$1,*$3,*$5)
+            ).ptr();
+            delete $1; delete $3; delete $5;
           }
 ;
 

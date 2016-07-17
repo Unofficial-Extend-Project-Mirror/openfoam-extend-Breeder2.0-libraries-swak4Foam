@@ -37,7 +37,7 @@ SourceFiles
     swakThermophysicalPluginFunction.C
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -59,6 +59,8 @@ namespace Foam
 /*---------------------------------------------------------------------------*\
                            Class swakThermophysicalPluginFunction Declaration
 \*---------------------------------------------------------------------------*/
+
+template<class ThermoType>
 class swakThermophysicalPluginFunction
 :
     public FieldValuePluginFunction
@@ -69,9 +71,9 @@ class swakThermophysicalPluginFunction
     swakThermophysicalPluginFunction(const swakThermophysicalPluginFunction &);
 
 protected:
-    static const swakFluidThermoType &thermoInternal(const fvMesh &reg);
+    static const ThermoType &thermoInternal(const fvMesh &reg);
 
-    const swakFluidThermoType &thermo();
+    const ThermoType &thermo();
 
 public:
     swakThermophysicalPluginFunction(

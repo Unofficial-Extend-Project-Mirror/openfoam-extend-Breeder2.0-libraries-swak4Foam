@@ -38,7 +38,8 @@ Description
 SourceFiles
 
 Contributors/Copyright:
-    2012-2015 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
+    2015-2016 Bruno Santos <wyldckat@gmail.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -68,7 +69,12 @@ Contributors/Copyright:
 #define FOAM_HAS_SORTED_TOC
 #endif
 
-#if !((FOAM_VERSION4SWAK_MAJOR > 1) || (FOAM_VERSION4SWAK_MINOR > 6))
+// OpenFOAM-dev version. Has no number. Is assumed to be 9.x
+#if FOAM_VERSION4SWAK_MAJOR > 8
+#define FOAM_OF_DEV_VERSION
+#endif
+
+#if (defined(FOAM_DEV) && FOAM_VERSION4SWAK_MAJOR<2) || (!defined(FOAM_DEV) && FOAM_VERSION4SWAK_MAJOR>=3)
 #define FOAM_OLDTIME_PROBLEM
 #endif
 
@@ -162,6 +168,10 @@ Contributors/Copyright:
 #ifndef FOAM_DEV
 // this version has fvOptions
 #define FOAM_HAS_FVOPTIONS
+#endif
+
+#if defined(FOAM_VERSION4SWAK_IS_OPENFOAMPLUS)
+#define FOAM_FVOPTIONS_IN_FV
 #endif
 
 #ifndef FOAM_DEV
@@ -261,6 +271,10 @@ Contributors/Copyright:
 #define FOAM_NEW_MESH2MESH
 #endif
 
+#if defined(FOAM_VERSION4SWAK_IS_OPENFOAMPLUS)
+#define FOAM_MESH2MESH_NO_2ND_ORDER_TENSOR
+#endif
+
 #if FOAM_VERSION4SWAK > VERSION_NR2(2,2) && !defined(FOAM_DEV)
 #define FOAM_VOLUMETYPE_IS_TYPE
 #endif
@@ -286,6 +300,10 @@ Contributors/Copyright:
 #endif
 
 #if defined(FOAM_DEV)
+#define FOAM_HAS_NO_FOUR_PARAMETER_FINDINSTANCE
+#endif
+
+#if defined(FOAM_DEV)
 #define FOAM_SOLUTION_HAS_NO_READ_WITH_DICT
 #define FOAM_SCHEMES_HAS_NO_READ_WITH_DICT
 #define FOAM_FVMESH_NOT_CHILD_OF_FVSCHEMES_SOLUTION
@@ -295,9 +313,58 @@ Contributors/Copyright:
 #define FOAM_HAS_LOCAL_DEBUGSWITCHES
 #endif
 
+#if FOAM_VERSION4SWAK < VERSION_NR2(2,2) && !defined(FOAM_DEV)
+#define FOAM_LDUMATRIX_SOLVER_PERFORMANCE
+#endif
+
+#if FOAM_VERSION4SWAK >= VERSION_NR(3,0,0) && !defined(FOAM_DEV)
+#define FOAM_WALLDIST_HAS_Y_METHOD
+#endif
+
+#if (FOAM_VERSION4SWAK > VERSION_NR2(2,2)) && !defined(FOAM_DEV)
+#define FOAM_PTRAITS_HAS_ROOTMAX
+#endif
+
+#if (FOAM_VERSION4SWAK > VERSION_NR2(2,0)) && !defined(FOAM_DEV)
+#define FOAM_DATAENTRY_CLASS_NEEDS_WRITEDATA
+#endif
+
 #if FOAM_VERSION4SWAK >= VERSION_NR(3,2,0) && defined(FOAM_DEV)
 #define FOAM_MOVED_TIME_AND_STRING_HEADERS
 #endif
+
+#if !defined(FOAM_DEV)
+#define FOAM_FV_HAS_SMOOTH_SWEEP_SPREAD
+#endif
+
+#if !defined(FOAM_DEV)
+// currently the available version of interpolation2DTable have a syntax error
+#define FOAM_NEEDS_PATCHED_INTERPOLATION2DTABLE
+#endif
+
+#if ((FOAM_VERSION4SWAK > VERSION_NR2(2,2)) && !defined(FOAM_DEV)) || defined(FOAM_NEEDS_PATCHED_INTERPOLATION2DTABLE)
+#define FOAM_HAS_INTERPOLATION2DTABLE
+#endif
+
+#if (FOAM_VERSION4SWAK >= VERSION_NR(2,2,0)) && !defined(FOAM_DEV)
+#define FOAM_HAS_IOMRFLIST
+#endif
+
+#if (FOAM_VERSION4SWAK >= VERSION_NR(2,3,0)) && !defined(FOAM_DEV)
+#define FOAM_MRF_NEW_METHOD_NAME
+#endif
+
+#if (FOAM_VERSION4SWAK >= VERSION_NR(3,0,0)) && !defined(FOAM_DEV)
+#define FOAM_MRF_CHANGED_CORIOLIS
+#endif
+
+
+#if FOAM_VERSION4SWAK >= VERSION_NR(4,0,0) && defined(FOAM_DEV)
+#define FOAM_LDUSOLVERPERFORMANCE
+#elif FOAM_VERSION4SWAK < VERSION_NR(4,0,0) && defined(FOAM_DEV)
+#define FOAM_LDUMATRIX_SOLVERPERFORMANCE
+#endif
+
 
 #include "swakVersion.H"
 

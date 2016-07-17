@@ -37,7 +37,7 @@ Description
 SourceFiles
 
 Contributors/Copyright:
-    2012-2015 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2015 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -52,9 +52,25 @@ Contributors/Copyright:
 #include "fvOption.H"
 #include "makeFvOption.H"
 
+#if (FOAM_VERSION4SWAK >= VERSION_NR(3,0,0)) && !defined(FOAM_DEV)
+
+#include "cellSetOption.H"
+
+namespace Foam {
+    typedef fv::cellSetOption swakFvOptionType;
+}
+
+#define FOAM_FVOPTION_MAKE_NOT_IN_NAMESPACE
+
+#else
+
+
+
 namespace Foam {
     typedef fv::option swakFvOptionType;
 }
+
+#endif
 
 #define makeSwakFvOption makeFvOption
 

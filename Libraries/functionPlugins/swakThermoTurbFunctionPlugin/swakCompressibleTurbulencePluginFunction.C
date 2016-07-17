@@ -29,7 +29,7 @@ License
     Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 Contributors/Copyright:
-    2012-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2012-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -54,7 +54,7 @@ swakCompressibleTurbulencePluginFunction::swakCompressibleTurbulencePluginFuncti
     const word &name,
     const word &returnValueType
 ):
-    swakThermophysicalPluginFunction(
+    swakThermophysicalPluginFunction<swakFluidThermoType>(
         parentDriver,
         name,
         returnValueType
@@ -152,6 +152,12 @@ concreteTurbFunction(epsilon,volScalarField);
 concreteTurbFunction(R,volSymmTensorField);
 concreteTurbFunction(devRhoReff,volSymmTensorField);
 
+#ifdef FOAM_HAS_FLUIDTHERMO
+concreteTurbFunction(kappaEff,volScalarField);
+#ifndef FOAM_NEW_TURBULENCE_STRUCTURE
+concreteTurbFunction(rhoEpsilonEff,volScalarField);
+#endif
+#endif
 
 } // namespace
 

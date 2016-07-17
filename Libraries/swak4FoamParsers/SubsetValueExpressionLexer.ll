@@ -25,7 +25,7 @@ Description
 
 
 Contributors/Copyright:
-    2010-2013 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2010-2013, 2015-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id:  $
 \*---------------------------------------------------------------------------*/
@@ -217,6 +217,8 @@ eigenVectors           return token::TOKEN_eigenVectors;
         yylval->name = ptr; return token::TOKEN_LINE;
     } else if(driver.isLookup(*ptr)) {
         yylval->name = ptr; return token::TOKEN_LOOKUP;
+    } else if(driver.isLookup2D(*ptr)) {
+        yylval->name = ptr; return token::TOKEN_LOOKUP2D;
     } else if(driver.is<Foam::vector>(*ptr)) {
         yylval->name = ptr; return token::TOKEN_VID;
     } else if(driver.is<Foam::tensor>(*ptr)) {

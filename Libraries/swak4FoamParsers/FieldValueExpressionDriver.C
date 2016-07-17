@@ -25,7 +25,7 @@ Description
 
 
 Contributors/Copyright:
-    2006-2014 Bernhard F.W. Gschaider <bgschaid@ice-sf.at>
+    2006-2016 Bernhard F.W. Gschaider <bgschaid@hfd-research.com>
 
  SWAK Revision: $Id$
 \*---------------------------------------------------------------------------*/
@@ -674,7 +674,13 @@ tmp<volScalarField> FieldValueExpressionDriver::makeDistanceField()
     );
     f->dimensions().reset(mesh_.C().dimensions());
     wallDist dist(mesh_);
+
+#ifdef FOAM_WALLDIST_HAS_Y_METHOD
+    f()==dist.y();
+#else
     f()==dist;
+#endif
+
     f->dimensions().reset(dimless);
 
     f->correctBoundaryConditions();
